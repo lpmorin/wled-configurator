@@ -168,34 +168,6 @@ def configure_wled_hardware(target_ip):
         response.raise_for_status()
         print("Configuration response:", response.text)
 
-        # Send button configuration
-        print("\nSending button configuration...")
-        button_config = {
-            "hw": {
-                "btn": {
-                    "max": 2,
-                    "pull": True,
-                    "ins": [
-                        {
-                            "type": 2,
-                            "pin": [2],
-                            "macros": [1, 2, 3]
-                        },
-                        {
-                            "type": 0,
-                            "pin": [-1],
-                            "macros": [0, 0, 0]
-                        }
-                    ],
-                    "tt": 32,
-                    "mqtt": False
-                }
-            }
-        }
-        response = requests.post(f"http://{target_ip}/json/cfg/hw", data=json.dumps(button_config), headers={'Content-Type': 'application/json'}, timeout=5)
-        response.raise_for_status()
-        print("Button configuration response:", response.text)
-
         # Let's also try to verify the settings were applied
         print("\nVerifying current configuration...")
         response = requests.get(f"http://{target_ip}/json/cfg", timeout=5)
