@@ -46,157 +46,18 @@ def select_wled_device(devices):
             except (ValueError, IndexError):
                 print("Invalid selection. Please try again.")
 
-def configure_wled_hardware(target_ip):
-    # LED and button configuration
-    # LED and button configuration with Python booleans
-    python_config = {
-        "rev": [1, 0],
-        "vid": 2312120,
-        "if": {
-            "pin": [1],
-            "do": ["WS281x"],
-            "co": ["GRB"],
-            "start": [0],
-            "len": [24],
-            "rev": [False],
-            "skip": [0],
-            "ref": False,
-            "mxseg": False
-        },
-        "hw": {
-            "led": {
-                "total": 24,
-                "maxpwr": 850,
-                "ledma": 35,
-                "rgbwm": 0,
-                "autooff": False,
-                "freq": 42
-            },
-            "btn": {
-                "pin": [2],
-                "type": [0],
-                "macros": [1,2,3]
-            },
-            "ir": {
-                "pin": -1,
-                "type": 0
-            },
-            "relay": {
-                "pin": 12,
-                "inv": False
-            },
-            "baud": 1152
-        },
-        "light": {
-            "scale-bri": 100,
-            "pal-mode": 1,
-            "gc": {
-                "bri": False,
-                "col": True,
-                "val": 2.8
-            },
-            "tr": {
-                "mode": 3,
-                "dur": 700,
-                "pal": True
-            },
-            "def": {
-                "ps": 0,
-                "on": False,
-                "bri": 128
-            }
-        }
-    }
-
-    try:
-        # Get current device info
-        response = requests.get(f"http://{target_ip}/json/info", timeout=5)
-        response.raise_for_status()
-        mac_address = response.json().get("mac", "Unknown MAC address")
-        print(f"\nConfiguring device MAC address: {mac_address}")
-
-        # Send LED configuration
-        print("Sending LED configuration...")
-        led_config = {
-            "hw": {
-                "led": {
-                    "total": 24,
-                    "maxpwr": 250,
-                    "ledma": 25,
-                    "cct": False,
-                    "cr": False,
-                    "cb": 0,
-                    "fps": 42,
-                    "rgbwm": 255,
-                    "ld": False,
-                    "ins": [
-                        {
-                            "start": 0,
-                            "len": 24,
-                            "pin": [1],
-                            "order": 0,
-                            "rev": False,
-                            "skip": 0,
-                            "type": 22,
-                            "ref": False,
-                            "rgbwm": 0,
-                            "freq": 0
-                        }
-                    ]
-                },
-                "btn": {
-                    "max": 2,
-                    "pull": True,
-                    "ins": [
-                        {
-                            "type": 2,
-                            "pin": [2],
-                            "macros": [1, 2, 3]
-                        },
-                        {
-                            "type": 0,
-                            "pin": [-1],
-                            "macros": [0, 0, 0]
-                        }
-                    ],
-                    "tt": 32,
-                    "mqtt": False
-                }
-            }
-        }
-        response = requests.post(f"http://{target_ip}/json/cfg", data=json.dumps(led_config), headers={'Content-Type': 'application/json'}, timeout=5)
-        response.raise_for_status()
-        print("Configuration response:", response.text)
-
-        # Let's also try to verify the settings were applied
-        print("\nVerifying current configuration...")
-        response = requests.get(f"http://{target_ip}/json/cfg", timeout=5)
-        current_config = response.json()
-        print("Current configuration:")
-        print(json.dumps(current_config, indent=2))
-        
-        # Restart WLED using the JSON API
-        print("\nRestarting WLED...")
-        # Using json.dumps to convert Python True to JSON true
-        restart_command = json.dumps({"rb": True})
-        response = requests.post(f"http://{target_ip}/json/state", data=restart_command, headers={'Content-Type': 'application/json'}, timeout=5)
-        restart_response = response.json()
-        print("Restart command sent. Response from WLED:")
-        print(json.dumps(restart_response, indent=2))
-        print("\nDevice will reboot in a few seconds.")
-        
-    except requests.RequestException as e:
-        print(f"Failed to send configuration: {e}")
-
 def upload_presets_to_device(device, presets_file):
-    url = f"http://{device.server}:{device.port}/json/presets"
-    with open(presets_file, 'r') as file:
-        presets = json.load(file)
-    response = requests.post(url, json=presets)
-    if response.status_code == 200:
-        print(f"Successfully uploaded presets to {device.server}")
-    else:
-        print(f"Failed to upload presets to {device.server}: {response.status_code}")
+    url = f"http://{device.parsed_addresses()[0]}:{device.port}/edit?save=presets.json"
+    #curl -F "data=@presets.json" "http://[WLED-IP]/edit?save=presets.json"
+    with open(presets_file, "rb") as file_data:
+        # Send the POST request with multipart/form-data
+        response = requests.post(url, files={"data": file_data})
+
+        ##response = requests.post(url, json=presets, headers={'Content-Type': 'application/json'}, timeout=5)
+        if response.status_code == 200:
+            print(f"Successfully uploaded presets to {device.server}")
+        else:
+            print(f"Failed to upload presets to {device.server}: {response.status_code}")
 
 def main():
     parser = argparse.ArgumentParser(description="Configure WLED LED and hardware settings.")
@@ -214,10 +75,9 @@ def main():
             devices = select_wled_device(devices)
         for device in devices:
             target_ip = device.parsed_addresses()[0]
-            configure_wled_hardware(target_ip)
             upload_presets_to_device(device, args.presets_file)
     elif args.target_ip:
-        configure_wled_hardware(args.target_ip)
+        upload_presets_to_device(args.target_ip, args.presets_file)
     else:
         print("Please provide either --target-ip or --discover option.")
         exit(1)
