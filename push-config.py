@@ -49,65 +49,6 @@ def select_wled_device(devices):
 def configure_wled_hardware(target_ip):
     # LED and button configuration
     # LED and button configuration with Python booleans
-    python_config = {
-        "rev": [1, 0],
-        "vid": 2312120,
-        "if": {
-            "pin": [1],
-            "do": ["WS281x"],
-            "co": ["GRB"],
-            "start": [0],
-            "len": [24],
-            "rev": [False],
-            "skip": [0],
-            "ref": False,
-            "mxseg": False
-        },
-        "hw": {
-            "led": {
-                "total": 24,
-                "maxpwr": 850,
-                "ledma": 35,
-                "rgbwm": 0,
-                "autooff": False,
-                "freq": 42
-            },
-            "btn": {
-                "pin": [2],
-                "type": [0],
-                "macros": [1,2,3]
-            },
-            "ir": {
-                "pin": -1,
-                "type": 0
-            },
-            "relay": {
-                "pin": 12,
-                "inv": False
-            },
-            "baud": 1152
-        },
-        "light": {
-            "scale-bri": 100,
-            "pal-mode": 1,
-            "gc": {
-                "bri": False,
-                "col": True,
-                "val": 2.8
-            },
-            "tr": {
-                "mode": 3,
-                "dur": 700,
-                "pal": True
-            },
-            "def": {
-                "ps": 0,
-                "on": False,
-                "bri": 128
-            }
-        }
-    }
-
     try:
         # Get current device info
         response = requests.get(f"http://{target_ip}/json/info", timeout=5)
@@ -162,6 +103,11 @@ def configure_wled_hardware(target_ip):
                     "tt": 32,
                     "mqtt": False
                 }
+            },
+            "def": {
+                "ps": 2,
+                "on": True,
+                "bri": 32
             }
         }
         response = requests.post(f"http://{target_ip}/json/cfg", data=json.dumps(led_config), headers={'Content-Type': 'application/json'}, timeout=5)
