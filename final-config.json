@@ -159,7 +159,7 @@
 	"def": {
 		"ps": 2,
 		"on": true,
-		"bri": 128
+		"bri": 20
 	},
 	"if": {
 		"sync": {
