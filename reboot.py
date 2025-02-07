@@ -61,11 +61,11 @@ def send_reboot_command(target_ip):
 
 def main():
     parser = argparse.ArgumentParser(description="Send reboot command to WLED devices.")
-    parser.add_argument("--target-ips", help="The IP address of the WLED devices.")
+    parser.add_argument("--target-ip", help="The IP address of the WLED devices.")
     parser.add_argument("--discover", action="store_true", help="Use mDNS discovery to find WLED devices.")
     args = parser.parse_args()
 
-    target_ips = args.target_ips if args.target_ips else []
+    target_ips = args.target_ip if args.target_ip else []
 
     if args.discover:
 
