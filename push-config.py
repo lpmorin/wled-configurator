@@ -125,7 +125,7 @@ def configure_wled_hardware(target_ip):
         print("\nRestarting WLED...")
         # Using json.dumps to convert Python True to JSON true
         restart_command = json.dumps({"rb": True})
-        response = requests.post(f"http://{target_ip}/json/state", data=restart_command, headers={'Content-Type': 'application/json'}, timeout=5)
+        response = requests.post(f"http://{target_ip}/json/state", data=restart_command, headers={'Content-Type': 'application/json'}, timeout=2)
         restart_response = response.json()
         print("Restart command sent. Response from WLED:")
         print(json.dumps(restart_response, indent=2))
