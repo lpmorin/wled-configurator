@@ -4,6 +4,10 @@ from zeroconf import Zeroconf, ServiceBrowser, ServiceListener
 import time
 import json
 
+class WLEDDevice:
+    def __init__(self, ip, port=80):
+        self.server = ip
+        self.port = port
 class WLEDListener(ServiceListener):
     def __init__(self):
         self.devices = []
@@ -47,7 +51,7 @@ def select_wled_device(devices):
                 print("Invalid selection. Please try again.")
 
 def upload_presets_to_device(device, presets_file):
-    url = f"http://{device.parsed_addresses()[0]}:{device.port}/edit?save=presets.json"
+    url = f"http://{device.server}:{device.port}/edit?save=presets.json"
     #curl -F "data=@presets.json" "http://[WLED-IP]/edit?save=presets.json"
     with open(presets_file, "rb") as file_data:
         # Send the POST request with multipart/form-data
@@ -61,7 +65,7 @@ def upload_presets_to_device(device, presets_file):
 
 def main():
     parser = argparse.ArgumentParser(description="Configure WLED LED and hardware settings.")
-    parser.add_argument("--target-ip", help="The IP address of the WLED device.")
+    parser.add_argument('--target-ip', type=str, help='Comma separated list of target IPs (ex: 192.168.1.10,192.168.1.11)')
     parser.add_argument("--discover", action="store_true", help="Use mDNS discovery to find WLED devices.")
     parser.add_argument("presets_file", help="Path to the presets.json file")
     args = parser.parse_args()
@@ -74,10 +78,21 @@ def main():
         if len(devices) > 0:
             devices = select_wled_device(devices)
         for device in devices:
-            target_ip = device.parsed_addresses()[0]
+            device.server = device.parsed_addresses()[0]
+            device.port = device.port
             upload_presets_to_device(device, args.presets_file)
     elif args.target_ip:
-        upload_presets_to_device(args.target_ip, args.presets_file)
+                # Handle multiple IPs entered as comma separated string
+        target_ips = [ip.strip() for ip in args.target_ip.split(',')]
+        print("Using target IP(s):", target_ips)
+        # For each IP provided, you can perform your operation.
+        # Example: push presets to each target IP.
+        for ip in target_ips:
+            device = WLEDDevice(ip=ip)
+            # Replace this with your actual logic for sending presets
+            # print(f"Pushing preset to device at {ip}...")
+            upload_presets_to_device(device, args.presets_file)
+
     else:
         print("Please provide either --target-ip or --discover option.")
         exit(1)
